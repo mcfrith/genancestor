@@ -1,0 +1,93 @@
+#! /bin/sh
+# Author: Martin C. Frith 2024
+
+PATH=$PATH:$(dirname "$0")
+progName=$(basename "$0")
+tmp=$progName.$$
+
+P=4
+u=YASS
+H=1
+
+usage="usage: $progName [options] genome1.fa genome2.fa genome3.fa [outputName]
+
+Write ancestralized genome1, by majority vote from three genomes.
+
+options:
+  -P NUM     number of threads (default: $P)
+  -u SEED    seed for matching distantly-related genomes (default: $u)
+  -L         omit any alignment not near (in both sequences) to other alignments
+  -d LENGTH  maximum length of deletion to undo
+  -i LENGTH  maximum length of insertion to undo"
+
+die () {
+    echo "$@" >&2
+    exit 1
+}
+
+while getopts :P:u:d:i:L opt
+do
+    case "$opt" in
+	P) P=$OPTARG ;;
+	u) u=$OPTARG ;;
+	d) dOpt=-d$OPTARG ;;
+	i) iOpt=-i$OPTARG ;;
+	L) link=1 ;;
+	*) exec echo "$usage" ;;
+    esac
+done
+shift $(($OPTIND - 1))
+test $# -ne 3 && test $# -ne 4 && die "$usage"
+
+genome1=$1
+genome2=$2
+genome3=$3
+outName=$4
+
+if test "$genome1" = - || test "$genome2" = - || test "$genome3" = -
+then die "$progName: the inputs must be real files, not '-'"
+fi
+
+trainMe () {
+    seed=$1
+    db=$tmp.$seed
+    test -e $db.prj || lastdb -P$P -c -u$seed $db "$genome1"
+    last-train -P$P --revsym -C2 $db "$2" > $tmp.train
+}
+
+alignMe () {
+    seed=RY4
+    trainMe $seed "$@"
+
+    if grep percent $tmp.train | tail -n2 | awk '{exit $5 > 85}'
+    then
+	seed=$u
+	trainMe $seed "$@"
+    fi
+
+    lastal -P$P -H$H -C2 --split -p $tmp.train $tmp.$seed "$@" |
+    last-split -r |
+    if test "$link"
+    then maf-linked -
+    else cat
+    fi
+}
+
+if test "$dOpt" || test "$iOpt" || test "$outName"
+then
+    aln2=$tmp.2.maf
+    aln3=$tmp.3.maf
+else
+    len=$(grep -v '>' "$genome1" | tr -cd a-zA-Z | wc -c)
+    base2=$(basename "$genome2")
+    base3=$(basename "$genome3")
+    aln2=$progName-$len-${base2%.f*a}.maf
+    aln3=$progName-$len-${base3%.f*a}.maf
+    test "$aln2" = "$aln3" &&
+    die "$progName: same name for files 2 and 3: can't make cache files"
+fi
+
+test -e "$aln2" || alignMe "$genome2" > "$aln2"
+test -e "$aln3" || alignMe "$genome3" > "$aln3"
+genancestor-edit $dOpt $iOpt "$aln2" "$aln3" "$genome1" "$outName"
+rm $tmp.*

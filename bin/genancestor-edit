@@ -1,0 +1,166 @@
+#! /usr/bin/env python
+# Author: Martin C. Frith 2024
+
+from __future__ import print_function
+
+import argparse
+import collections
+import gzip
+import sys
+
+def openFile(fileName):
+    if fileName == "-":
+        return sys.stdin
+    if fileName.endswith(".gz"):
+        return gzip.open(fileName, "rt")  # xxx dubious for Python2
+    return open(fileName)
+
+def readSequences(lines):
+    titleLine = None
+    for line in lines:
+        if line[0] == ">":
+            if titleLine: yield titleLine, "".join(seqLines)
+            titleLine = line
+            seqLines = []
+        else:
+            seqLines.append(line.rstrip())
+    if titleLine: yield titleLine, "".join(seqLines)
+
+def writeSequence(titleLine, seq, outFile):
+    outFile.write(titleLine)
+    lineLength = 80  # same as genomic.fna files from NCBI
+    for i in range(0, len(seq), lineLength):
+        j = i + lineLength
+        print(seq[i:j], file=outFile)
+
+def editsFromAln(args, aPos, aSeq, bSeq):
+    alnLen = len(aSeq)
+    i = 0
+    while i < alnLen:
+        a = aSeq[i]
+        b = bSeq[i]
+        if a == "-":
+            j = i+1
+            while j < alnLen and aSeq[j] == "-":
+                j += 1
+            while j < alnLen and bSeq[i] == bSeq[j] and aSeq[j] != "-":
+                if bSeq[j] != aSeq[j]:
+                    yield aPos, aPos+1, bSeq[j]
+                aPos += 1
+                i += 1
+                j += 1
+            if j-i <= args.d:
+                yield aPos, aPos, bSeq[i:j]
+            i = j
+        elif b == "-":
+            j = i+1
+            while j < alnLen and bSeq[j] == "-":
+                j += 1
+            while j < alnLen and aSeq[i] == aSeq[j] and bSeq[j] != "-":
+                if bSeq[j] != aSeq[j]:
+                    yield aPos, aPos+1, bSeq[j]
+                aPos += 1
+                i += 1
+                j += 1
+            if j-i <= args.i:
+                yield aPos, aPos+j-i, ""
+            aPos += j-i
+            i = j
+        else:
+            if b != a:
+                yield aPos, aPos+1, b
+            aPos += 1
+            i += 1
+
+def editsFromAlignments(args, fileName):
+    editsDict = collections.defaultdict(list)
+    seqName = None
+    for line in openFile(fileName):
+        if line[0] == "s":
+            w = line.split()
+            if seqName is None:
+                junk, seqName, beg, span, strand, seqLen, aSeq = w
+                if strand == "-":
+                    raise RuntimeError("can't handle - strand for top seq")
+            else:
+                bSeq = w[6]
+                if len(aSeq) != len(bSeq):
+                    raise RuntimeError("unequal aligned sequence lengths")
+                ed = editsFromAln(args, int(beg), aSeq.upper(), bSeq.upper())
+                editsDict[seqName].extend(ed)
+                seqName = None
+    for v in editsDict.values(): v.sort()
+    return editsDict
+
+def sharedEdits(listAB, listAC):
+    i = j = 0
+    while i < len(listAB) and j < len(listAC):
+        x = listAB[i]
+        y = listAC[j]
+        if x == y: yield x
+        if x[0] <= y[0]: i += 1
+        if y[0] <= x[0]: j += 1
+
+def modifiedSequenceParts(seq, editList):
+    oldEnd = 0
+    for beg, end, chunk in editList:
+        yield seq[oldEnd:beg]
+        yield chunk
+        oldEnd = end
+    yield seq[oldEnd:]
+
+def doSequences(lines, editsDict, outFile):
+    seqDict = {}
+    for titleLine, seq in readSequences(lines):
+        seqName = titleLine[1:].split()[0]
+        if seqName in seqDict:
+            raise RuntimeError("duplicate sequence name: " + seqName)
+        seqDict[seqName] = len(seq)
+        editList = editsDict.get(seqName, [])
+        seq = "".join(modifiedSequenceParts(seq, editList))
+        writeSequence(titleLine, seq, outFile)
+    return seqDict
+
+def writeSegmentPair(seqName, beg1, beg2, size, outFile):
+    if size: print(size, seqName, beg1, seqName, beg2, sep="\t", file=outFile)
+
+def writeEdits(seqDict, editsDict, outFile):
+    for seqName, seqLen in sorted(seqDict.items()):
+        i = j = 0
+        for beg, end, chunk in editsDict.get(seqName, []):
+            if beg+1 == end and len(chunk) == 1: continue
+            size = beg - i
+            writeSegmentPair(seqName, j, i, size, outFile)
+            i = end
+            j += size + len(chunk)
+        size = seqLen - i
+        writeSegmentPair(seqName, j, i, size, outFile)
+
+def main(args):
+    editsAB = editsFromAlignments(args, args.alnsAB)
+    editsAC = editsFromAlignments(args, args.alnsAC)
+    bothDict = {k: list(sharedEdits(editsAB[k], editsAC[k])) for k in editsAB}
+    if not args.outputName:
+        doSequences(openFile(args.sequences), bothDict, sys.stdout)
+        return
+    with open(args.outputName + ".fa", "w") as outFile:
+        seqDict = doSequences(openFile(args.sequences), bothDict, outFile)
+    if args.d < 1 and args.i < 1: return
+    with open(args.outputName + ".seg", "w") as outFile:
+        writeEdits(seqDict, bothDict, outFile)
+
+if __name__ == "__main__":
+    description = "Output changes to sequence(s) A that are shared by B and C."
+    ap = argparse.ArgumentParser(description=description)
+    ap.add_argument("alnsAB",
+                    help="A-to-B pair-wise alignment file in MAF format")
+    ap.add_argument("alnsAC",
+                    help="A-to-C pair-wise alignment file in MAF format")
+    ap.add_argument("sequences", help="sequence(s) file for A in FASTA format")
+    ap.add_argument("outputName", nargs="?", help="name of output files")
+    ap.add_argument("-d", type=int, help="maximum length of deletion to undo")
+    ap.add_argument("-i", type=int, help="maximum length of insertion to undo")
+    args = ap.parse_args()
+    if args.d is None: args.d = 1000 if args.outputName else 0
+    if args.i is None: args.i = 1000 if args.outputName else 0
+    main(args)

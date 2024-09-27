@@ -1,0 +1,16 @@
+#! /bin/sh
+# Author: Martin C. Frith 2024
+
+if test $# -eq 0
+then
+    progName=$(basename "$0")
+    echo "usage: $progName BA.seg CB.seg DC.seg > DA.seg"
+elif test $# -eq 1
+then
+    cat "$@"
+else
+    f=$1
+    shift
+    "$0" "$@" |
+    seg-swap | seg-sort | seg-join $f - | seg-swap -n3 | cut -f-5 | seg-sort
+fi
