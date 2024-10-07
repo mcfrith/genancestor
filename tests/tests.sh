@@ -13,4 +13,5 @@ PATH=../bin:$PATH
     cat hominoidea.*
     genancestor-compose hominini.seg hominoidea.seg
     rm hominini.* hominoidea.*
+    genancestor-edit -i1000 h22c.maf h22o.maf h22.fa
 } | diff -u tests.txt -

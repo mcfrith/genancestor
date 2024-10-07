@@ -22,8 +22,7 @@ You can run it again to get older ancestors:
     genancestor hominini.fa orang.fa gibbon.fa > hominidae.fa
 
 This usage doesn't consider insertions or deletions, which is
-convenient: coordinates in the (rough) ancestor and descendant are the
-same.
+convenient: coordinates in the ancestor and descendant are the same.
 
 ### Cache files
 

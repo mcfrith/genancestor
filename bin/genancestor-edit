@@ -33,7 +33,25 @@ def writeSequence(titleLine, seq, outFile):
         j = i + lineLength
         print(seq[i:j], file=outFile)
 
+def alignmentInput(lines):
+    seq1data = None
+    for line in lines:
+        if line[0] == "s":
+            junk, seqName, beg, span, strand, seqLen, seq = line.split()
+            beg = int(beg)
+            end = beg + int(span)
+            seq = seq.upper()
+            if seq1data is None:
+                if strand == "-":
+                    raise RuntimeError("can't handle - strand for top seq")
+                seq1data = seqName, beg, end, seq
+            else:
+                yield seq1data + (seqName, beg, end, seq, strand)
+                seq1data = None
+
 def editsFromAln(args, aPos, aSeq, bSeq):
+    aSeq = "".join(aSeq)
+    bSeq = "".join(bSeq)
     alnLen = len(aSeq)
     i = 0
     while i < alnLen:
@@ -74,22 +92,25 @@ def editsFromAln(args, aPos, aSeq, bSeq):
 
 def editsFromAlignments(args, fileName):
     editsDict = collections.defaultdict(list)
-    seqName = None
-    for line in openFile(fileName):
-        if line[0] == "s":
-            w = line.split()
-            if seqName is None:
-                junk, seqName, beg, span, strand, seqLen, aSeq = w
-                if strand == "-":
-                    raise RuntimeError("can't handle - strand for top seq")
-            else:
-                bSeq = w[6]
-                if len(aSeq) != len(bSeq):
-                    raise RuntimeError("unequal aligned sequence lengths")
-                ed = editsFromAln(args, int(beg), aSeq.upper(), bSeq.upper())
-                editsDict[seqName].extend(ed)
-                seqName = None
-    for v in editsDict.values(): v.sort()
+    alns = sorted(alignmentInput(openFile(fileName)))
+    oldPos = None
+    for seqName1, beg1, end1, seq1, seqName2, beg2, end2, seq2, strand in alns:
+        if len(seq1) != len(seq2):
+            raise RuntimeError("unequal aligned sequence lengths")
+        if (seqName1, seqName2, strand, beg2) == oldPos:  # inter-alignment gap
+            seq1s.append("X" * (beg1 - oldEnd1))
+            seq2s.append("-" * (beg1 - oldEnd1))
+        else:
+            if oldPos: addEdits(editsFromAln(args, beg, seq1s, seq2s))
+            addEdits = editsDict[seqName1].extend
+            beg = beg1
+            seq1s = []
+            seq2s = []
+        seq1s.append(seq1)
+        seq2s.append(seq2)
+        oldPos = seqName1, seqName2, strand, end2
+        oldEnd1 = end1
+    if oldPos: addEdits(editsFromAln(args, beg, seq1s, seq2s))
     return editsDict
 
 def sharedEdits(listAB, listAC):
@@ -161,6 +182,6 @@ if __name__ == "__main__":
     ap.add_argument("-d", type=int, help="maximum length of deletion to undo")
     ap.add_argument("-i", type=int, help="maximum length of insertion to undo")
     args = ap.parse_args()
-    if args.d is None: args.d = 1000 if args.outputName else 0
-    if args.i is None: args.i = 1000 if args.outputName else 0
+    if args.d is None: args.d = 100000 if args.outputName else 0
+    if args.i is None: args.i = 100000 if args.outputName else 0
     main(args)
