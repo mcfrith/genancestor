@@ -70,7 +70,7 @@ installed (in your PATH).
   sensitive, but slow and memory-consuming.
 
 - `-L`: Omit any alignment not near (in both sequences) to other
-  alignments (using maf-linked][]).
+  alignments (using [maf-linked][]).
 
 - `-d LENGTH`: maximum length of deletion to undo.  It will undo a
   deletion only if the 2 other genomes have same-length un-deleted
