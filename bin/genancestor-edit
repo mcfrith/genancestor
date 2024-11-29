@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # Author: Martin C. Frith 2024
 
 from __future__ import print_function
@@ -118,7 +118,11 @@ def sharedEdits(listAB, listAC):
     while i < len(listAB) and j < len(listAC):
         x = listAB[i]
         y = listAC[j]
-        if x == y: yield x
+        xBeg, xEnd, xSeq = x
+        yBeg, yEnd, ySeq = y
+        if xBeg == yBeg and xEnd == yEnd and len(xSeq) == len(ySeq):
+            if xSeq == ySeq or xBeg == xEnd:
+                yield x
         if x[0] <= y[0]: i += 1
         if y[0] <= x[0]: j += 1
 

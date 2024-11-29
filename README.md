@@ -69,17 +69,19 @@ installed (in your PATH).
   sensitive, but slow and memory-consuming.
 
 - `-L`: Omit any alignment not near (in both sequences) to other
-  alignments.  This uses [maf-linked][], which must be be installed
-  (in your PATH).
+  alignments (using maf-linked][]).
 
 - `-d LENGTH`: maximum length of deletion to undo.  It will undo a
-  deletion only if the 2 other genomes have identical un-deleted sequences.
+  deletion only if the 2 other genomes have same-length un-deleted
+  sequences.  It will add the sequence from the **2nd** genome.  This
+  is the only case where order of 2nd and 3rd genomes makes a
+  difference.
 
 - `-i LENGTH`: maximum length of insertion to undo.
 
 [ancient homologies]: https://doi.org/10.1093/molbev/msad275
 [LAST]: https://gitlab.com/mcfrith/last
-[maf-linked]: https://gitlab.com/mcfrith/protein-fossils
+[maf-linked]: https://gitlab.com/mcfrith/last/-/blob/main/doc/maf-linked.rst
 [paleovirology]: https://en.wikipedia.org/wiki/Paleovirology
 [seg]: https://github.com/mcfrith/seg-suite
 [seeding scheme]: https://gitlab.com/mcfrith/last/-/blob/main/doc/last-seeds.rst
