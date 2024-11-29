@@ -13,9 +13,10 @@ orangutan mitochondrial genomes (which are in the `tests` directory):
 
     genancestor human.fa chimp.fa orang.fa > hominini.fa
 
-The output is the same as the 1st (human) genome, except that, where
-chimp and orang have the same base that's different from human, the
-chimp/orang base is used.
+The output is the same as the 1st (human) genome, except at sites
+where both chimp and orang have a different base, and the chimp and
+orang bases are the same, or both purines, or both pyrimidines.  At
+those sites, the base from the 2nd (chimp) genome is used.
 
 You can run it again to get older ancestors:
 
@@ -73,9 +74,7 @@ installed (in your PATH).
 
 - `-d LENGTH`: maximum length of deletion to undo.  It will undo a
   deletion only if the 2 other genomes have same-length un-deleted
-  sequences.  It will add the sequence from the **2nd** genome.  This
-  is the only case where order of 2nd and 3rd genomes makes a
-  difference.
+  sequences.  It will insert the sequence from the 2nd genome.
 
 - `-i LENGTH`: maximum length of insertion to undo.
 

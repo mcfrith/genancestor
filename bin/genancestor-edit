@@ -121,7 +121,7 @@ def sharedEdits(listAB, listAC):
         xBeg, xEnd, xSeq = x
         yBeg, yEnd, ySeq = y
         if xBeg == yBeg and xEnd == yEnd and len(xSeq) == len(ySeq):
-            if xSeq == ySeq or xBeg == xEnd:
+            if xSeq == ySeq or xBeg == xEnd or xSeq + ySeq in ("AG", "GA", "CT", "TC"):
                 yield x
         if x[0] <= y[0]: i += 1
         if y[0] <= x[0]: j += 1
