@@ -53,9 +53,14 @@ trainMe () {
     db=$tmp.$seed
     test -e $db.prj || lastdb -P$P -c -u$seed $db "$genome1"
     last-train -P$P --revsym -C2 $db "$2" > $tmp.train
+    {
+	echo " $seed"
+	grep percent $tmp.train | tail -n2 | head -n1 | cut -c3-
+    } | paste -s >&2
 }
 
 alignMe () {
+    echo "$genome1" "$@" >&2
     seed=RY4
     trainMe $seed "$@"
 
