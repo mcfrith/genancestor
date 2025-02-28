@@ -69,9 +69,6 @@ installed (in your PATH).
   15% substitutions).  The default is `YASS`.  `MAM4` makes it more
   sensitive, but slow and memory-consuming.
 
-- `-L`: Omit any alignment not near (in both sequences) to other
-  alignments (using [maf-linked][]).
-
 - `-d LENGTH`: maximum length of deletion to undo.  It will undo a
   deletion only if the 2 other genomes have same-length un-deleted
   sequences.  It will insert the sequence from the 2nd genome.

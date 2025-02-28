@@ -16,7 +16,6 @@ Write ancestralized genome1, by majority vote from three genomes.
 options:
   -P NUM     number of threads (default: $P)
   -u SEED    seed for matching distantly-related genomes (default: $u)
-  -L         omit any alignment not near (in both sequences) to other alignments
   -d LENGTH  maximum length of deletion to undo
   -i LENGTH  maximum length of insertion to undo"
 
@@ -25,14 +24,13 @@ die () {
     exit 1
 }
 
-while getopts :P:u:d:i:L opt
+while getopts :P:u:d:i: opt
 do
     case "$opt" in
 	P) P=$OPTARG ;;
 	u) u=$OPTARG ;;
 	d) dOpt=-d$OPTARG ;;
 	i) iOpt=-i$OPTARG ;;
-	L) link=1 ;;
 	*) exec echo "$usage" ;;
     esac
 done
@@ -71,11 +69,7 @@ alignMe () {
     fi
 
     lastal -P$P -H$H -C2 --split -p $tmp.train $tmp.$seed "$@" |
-    last-split -r |
-    if test "$link"
-    then maf-linked -
-    else cat
-    fi
+    last-split -r | maf-linked -
 }
 
 if test "$dOpt" || test "$iOpt" || test "$outName"
