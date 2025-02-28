@@ -27,7 +27,7 @@ die () {
 minVersion=1611
 lastVersion=$(lastal --version | cut -d' ' -f2)
 test "$lastVersion" -ge $minVersion ||
-die "need LAST version >= $minVersion but got version $lastVersion"
+die "$progName: need LAST version >= $minVersion but got version $lastVersion"
 
 while getopts :P:u:d:i: opt
 do
@@ -50,6 +50,8 @@ outName=$4
 if test "$genome1" = - || test "$genome2" = - || test "$genome3" = -
 then die "$progName: the inputs must be real files, not '-'"
 fi
+
+genancestor-get "$genome1" "$genome2" "$genome3" || exit 1
 
 trainMe () {
     seed=$1

@@ -1,0 +1,25 @@
+#! /bin/sh
+# Author: Martin C. Frith 2025
+
+for i in "$@"
+do
+    test -e "$i" && continue
+    mkdir -p $(dirname "$i")
+    base=$(basename "$i")
+    b=${base%.f*a}
+    case "$b" in
+	GC?_*[0-9])
+	    datasets download genome accession "$b" --no-progressbar
+	    unzip -q ncbi_dataset.zip
+	    mv ncbi_dataset/data/*/*.fna "$i"
+	    rm -r ncbi_dataset.zip ncbi_dataset README.md md5sum.txt
+	    ;;
+	[A-Z]*[0-9])
+	    curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$b&rettype=fasta&retmode=text" > "$i"
+	    ;;
+	*)
+	    echo "can't get: $i" >&2
+	    exit 1
+	    ;;
+    esac
+done

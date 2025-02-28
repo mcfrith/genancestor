@@ -62,6 +62,17 @@ You can give it any number of seg files, but they must be in
 young-to-old order.  It requires requires [seg-suite][seg] to be
 installed (in your PATH).
 
+## Downloading sequences
+
+If a genome file doesn't exist and looks like an accession number,
+genancestor will make the file by downloading from NCBI:
+
+    genancestor NC_012920.1.fa NC_001643.1.fa NC_002083.1.fa hominini
+
+This also works for `my/directory/NC_012920.1.fa`.  For genome
+accessions starting with `GCA_` or `GCF_`, [datasets][] needs to be
+installed (in your PATH).
+
 ## genancestor options
 
 - `-P NUM`: number of parallel threads.
@@ -77,6 +88,7 @@ installed (in your PATH).
 - `-i LENGTH`: maximum length of insertion to undo.
 
 [ancient homologies]: https://doi.org/10.1093/molbev/msad275
+[datasets]: https://www.ncbi.nlm.nih.gov/datasets/docs
 [LAST]: https://gitlab.com/mcfrith/last
 [maf-linked]: https://gitlab.com/mcfrith/last/-/blob/main/doc/maf-linked.rst
 [paleovirology]: https://en.wikipedia.org/wiki/Paleovirology
