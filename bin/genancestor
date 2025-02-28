@@ -24,6 +24,11 @@ die () {
     exit 1
 }
 
+minVersion=1611
+lastVersion=$(lastal --version | cut -d' ' -f2)
+test "$lastVersion" -ge $minVersion ||
+die "need LAST version >= $minVersion but got version $lastVersion"
+
 while getopts :P:u:d:i: opt
 do
     case "$opt" in

@@ -1,7 +1,8 @@
 # genancestor
 
 This is a software pipeline to roughly reconstruct ancestral DNA
-sequences.  It requires [LAST][] to be installed (in your PATH).
+sequences.  It requires [LAST][] version >= 1611 to be installed (in
+your PATH).
 
 It may be useful for finding [ancient homologies][] or genetic fossils
 (e.g. [paleovirology][]).
