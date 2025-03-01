@@ -9,10 +9,9 @@ do
     b=${base%.f*a}
     case "$b" in
 	GC?_*[0-9])
-	    datasets download genome accession "$b" --no-progressbar
-	    unzip -q ncbi_dataset.zip
-	    mv ncbi_dataset/data/*/*.fna "$i"
-	    rm -r ncbi_dataset.zip ncbi_dataset README.md md5sum.txt
+	    curl "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$b/download?include_annotation_type=GENOME_FASTA" > "$i".zip
+	    unzip -pq "$i".zip "*.fna" > "$i"
+	    rm "$i".zip
 	    ;;
 	[A-Z]*[0-9])
 	    curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$b&rettype=fasta&retmode=text" > "$i"
