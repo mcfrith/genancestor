@@ -3,18 +3,18 @@
 
 for i in "$@"
 do
-    test -e "$i" && continue
+    test -s "$i" && continue
     mkdir -p $(dirname "$i")
     base=$(basename "$i")
     b=${base%.f*a}
     case "$b" in
 	GC?_*[0-9])
-	    curl "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$b/download?include_annotation_type=GENOME_FASTA" > "$i".zip
+	    curl -sS "https://api.ncbi.nlm.nih.gov/datasets/v2/genome/accession/$b/download?include_annotation_type=GENOME_FASTA" > "$i".zip
 	    unzip -pq "$i".zip "*.fna" > "$i"
 	    rm "$i".zip
 	    ;;
 	[A-Z]*[0-9])
-	    curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$b&rettype=fasta&retmode=text" > "$i"
+	    curl -sS "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$b&rettype=fasta&retmode=text" > "$i"
 	    ;;
 	*)
 	    echo "can't get: $i" >&2
