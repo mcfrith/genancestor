@@ -4,7 +4,7 @@
 for i in "$@"
 do
     test -s "$i" && continue
-    mkdir -p $(dirname "$i")
+    mkdir -p $(dirname "$i") || exit 1
     base=$(basename "$i")
     b=${base%.f*a}
     case "$b" in
@@ -21,4 +21,9 @@ do
 	    exit 1
 	    ;;
     esac
+
+    grep -q '>' "$i" || {
+	echo "download failed: $i" >&2
+	exit 1
+    }
 done

@@ -64,8 +64,9 @@ installed (in your PATH).
 
 ## Downloading sequences
 
-If a genome file doesn't exist and looks like an accession number,
-genancestor will make the file by downloading from NCBI:
+If a genome file doesn't exist (or is empty) and looks like an
+accession number, genancestor will make the file by downloading from
+NCBI:
 
     genancestor NC_012920.1.fa NC_001643.1.fa NC_002083.1.fa hominini
 
