@@ -76,9 +76,15 @@ This also works for `some/directory/NC_012920.1.fa`.
 
 - `-P NUM`: number of parallel threads.
 
-- `-u SEED`: [seeding scheme] to use for distantly-related genomes (>
-  15% substitutions).  The default is `YASS`.  `MAM4` makes it more
-  sensitive, but slow and memory-consuming.
+- `-m NUM`: maximum initial matches per position to use for
+  distantly-related genomes (> 15% substitutions).  The default is 2.
+  10 makes it more sensitive, but slow and memory-consuming.  See
+  "Aligning more distantly related genomes" in [here][].
+
+- `-u SEED`: [seeding scheme][] to use for distantly-related genomes
+  (> 15% substitutions).  The default is `YASS`.  `MAM4` makes it more
+  sensitive, but slow and memory-consuming.  See "Aligning more
+  distantly related genomes" in [here][].
 
 - `-d LENGTH`: maximum length of deletion to undo.  It will undo a
   deletion only if the 2 other genomes have same-length un-deleted
@@ -87,6 +93,7 @@ This also works for `some/directory/NC_012920.1.fa`.
 - `-i LENGTH`: maximum length of insertion to undo.
 
 [ancient homologies]: https://doi.org/10.1093/molbev/msad275
+[here]: https://gitlab.com/mcfrith/last/-/blob/main/doc/last-cookbook.rst
 [LAST]: https://gitlab.com/mcfrith/last
 [maf-linked]: https://gitlab.com/mcfrith/last/-/blob/main/doc/maf-linked.rst
 [paleovirology]: https://en.wikipedia.org/wiki/Paleovirology

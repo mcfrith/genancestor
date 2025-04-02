@@ -6,6 +6,7 @@ progName=$(basename "$0")
 tmp=$progName.$$
 
 P=4
+m=2
 u=YASS
 H=1
 
@@ -15,6 +16,7 @@ Write ancestralized genome1, by majority vote from three genomes.
 
 options:
   -P NUM     number of threads (default: $P)
+  -m NUM     lastal m value, for distantly-related genomes (default: $m)
   -u SEED    seed for matching distantly-related genomes (default: $u)
   -d LENGTH  maximum length of deletion to undo
   -i LENGTH  maximum length of insertion to undo"
@@ -29,10 +31,11 @@ lastVersion=$(lastal --version | cut -d' ' -f2)
 test "$lastVersion" -ge $minVersion ||
 die "$progName: need LAST version >= $minVersion but got version $lastVersion"
 
-while getopts :P:u:d:i: opt
+while getopts :P:m:u:d:i: opt
 do
     case "$opt" in
 	P) P=$OPTARG ;;
+	m) m=$OPTARG ;;
 	u) u=$OPTARG ;;
 	d) dOpt=-d$OPTARG ;;
 	i) iOpt=-i$OPTARG ;;
@@ -55,27 +58,30 @@ genancestor-get "$genome1" "$genome2" "$genome3" || exit 1
 
 trainMe () {
     seed=$1
+    U=$2
     db=$tmp.$seed
-    test -e $db.prj || lastdb -P$P -c -u$seed $db "$genome1"
-    last-train -P$P --revsym -C2 $db "$2" > $tmp.train
+    test -e $db.prj || lastdb -P$P -c -U$U -u$seed $db "$genome1"
+    last-train -P$P --revsym -C2 $db "$3" > $tmp.train
     {
 	echo " $seed"
 	grep percent $tmp.train | tail -n2 | head -n1 | cut -c3-
-    } | paste -s >&2
+    } | paste -s - >&2
 }
 
 alignMe () {
     echo "$genome1" "$@" >&2
     seed=RY4
-    trainMe $seed "$@"
+    mVal=2
+    trainMe $seed 400 "$@"
 
     if grep percent $tmp.train | tail -n2 | awk '{exit $5 > 85}'
     then
 	seed=$u
-	trainMe $seed "$@"
+	mVal=$m
+	trainMe $seed 100 "$@"
     fi
 
-    lastal -P$P -H$H -C2 --split -p $tmp.train $tmp.$seed "$@" |
+    lastal -P$P -m$mVal -H$H -C2 --split -p $tmp.train $tmp.$seed "$@" |
     last-split -r | maf-linked -
 }
 
